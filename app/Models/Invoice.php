@@ -87,7 +87,7 @@ class Invoice extends Model
     public static function generateInvoiceNumber(): string
     {
         $year = now()->year;
-        $lastInvoice = static::whereYear('created_at', $year)
+        $lastInvoice = static::withTrashed()->whereYear('created_at', $year)
             ->orderBy('id', 'desc')
             ->first();
 
