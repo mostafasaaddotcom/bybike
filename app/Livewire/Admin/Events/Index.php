@@ -50,6 +50,7 @@ class Index extends Component
     public function delete(int $eventId): void
     {
         $event = Event::findOrFail($eventId);
+        $event->invoice?->delete();
         $event->delete();
 
         session()->flash('success', 'Event deleted successfully.');

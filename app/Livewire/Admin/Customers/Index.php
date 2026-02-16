@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Customers;
 
 use App\Models\Customer;
+use App\Models\Invoice;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -26,6 +27,10 @@ class Index extends Component
     public function delete(int $customerId): void
     {
         $customer = Customer::findOrFail($customerId);
+
+        $eventIds = $customer->events()->pluck('id');
+        Invoice::whereIn('event_id', $eventIds)->delete();
+        $customer->events()->delete();
         $customer->delete();
 
         session()->flash('success', 'Customer deleted successfully.');
