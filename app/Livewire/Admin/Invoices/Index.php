@@ -37,7 +37,7 @@ class Index extends Component
     public function render()
     {
         $invoices = Invoice::query()
-            ->with(['event.customer'])
+            ->with(['event' => fn ($q) => $q->withTrashed(), 'event.customer' => fn ($q) => $q->withTrashed()])
             ->search($this->search)
             ->when($this->statusFilter, fn ($q) => $q->byStatus(InvoiceStatus::from($this->statusFilter)))
             ->latest()
