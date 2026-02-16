@@ -62,7 +62,7 @@ class Index extends Component
     public function render()
     {
         $events = Event::query()
-            ->with(['customer', 'invoice'])
+            ->with(['customer' => fn ($q) => $q->withTrashed(), 'invoice'])
             ->search($this->search)
             ->when($this->brandFilter, fn ($query) => $query->where('brand', $this->brandFilter))
             ->when($this->typeFilter, fn ($query) => $query->where('type', $this->typeFilter))

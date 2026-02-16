@@ -64,8 +64,8 @@
                 @forelse($events as $event)
                     <tr wire:key="event-{{ $event->id }}" class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-zinc-900 dark:text-white">{{ $event->customer->name }}</div>
-                            <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $event->customer->phone }}</div>
+                            <div class="text-sm font-medium text-zinc-900 dark:text-white">{{ $event->customer?->name ?? 'Deleted' }}</div>
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $event->customer?->phone }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-zinc-900 dark:text-zinc-300">{{ $event->brand->label() }}</div>
