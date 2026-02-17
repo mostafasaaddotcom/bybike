@@ -55,12 +55,24 @@ class PublicInvoiceController extends Controller
             return [$item->product_variant_id => $item->quantity];
         })->toArray();
 
+        $eventData = [
+            'type' => $event->type->label(),
+            'date' => $event->date->format('Y-m-d'),
+            'location' => $event->location,
+            'attendees' => $event->number_of_attendees,
+            'customer_name' => $event->customer->name,
+            'customer_phone' => $event->customer->phone,
+            'customer_email' => $event->customer->email,
+            'invoice_number' => $invoice->invoice_number,
+        ];
+
         return view('public.invoice.show', [
             'event' => $event,
             'invoice' => $invoice,
             'menus' => $menus,
             'variantData' => $variantData,
             'quantities' => $quantities,
+            'eventData' => $eventData,
         ]);
     }
 

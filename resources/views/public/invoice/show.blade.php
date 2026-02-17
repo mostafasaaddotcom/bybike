@@ -1,7 +1,7 @@
 <x-layouts.public>
 <div
     class="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8 sm:py-12 pb-20 lg:pb-0"
-    x-data="invoiceManager(@js($quantities), @js($invoice), '{{ $event->public_invoice_token }}', @js($variantData))"
+    x-data="invoiceManager(@js($quantities), @js($invoice), '{{ $event->public_invoice_token }}', @js($variantData), @js($eventData))"
     x-init="init()"
 >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -187,7 +187,6 @@
     {{-- Mobile Sticky Bottom Bar --}}
     <div
         class="fixed bottom-0 inset-x-0 lg:hidden bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 shadow-lg z-40"
-        @click="openCart()"
     >
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -199,16 +198,14 @@
                         <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" x-text="getCartItemCount()"></span>
                     </template>
                 </div>
-                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    <span x-text="getCartItemCount()"></span> item<span x-show="getCartItemCount() !== 1">s</span>
-                </span>
-            </div>
-            <div class="flex items-center gap-2">
                 <span class="text-lg font-bold text-blue-600 dark:text-blue-400"><span x-text="invoiceData.total.toFixed(2)"></span> LE</span>
-                <svg class="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                </svg>
             </div>
+            <button
+                @click="openCart()"
+                class="px-5 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+            >
+                Proceed
+            </button>
         </div>
     </div>
 

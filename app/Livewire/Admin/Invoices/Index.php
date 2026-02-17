@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Invoices;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -15,6 +16,7 @@ class Index extends Component
 
     public string $search = '';
 
+    #[Url]
     public ?string $statusFilter = '';
 
     public function updatingSearch(): void

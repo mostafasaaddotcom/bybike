@@ -76,7 +76,7 @@
 
         <div>
             <h3 class="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-4">Invoice Items</h3>
-            <div class="overflow-hidden border border-zinc-200 dark:border-zinc-700 rounded-lg">
+            <div class="overflow-x-auto border border-zinc-200 dark:border-zinc-700 rounded-lg">
                 <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
                     <thead class="bg-zinc-50 dark:bg-zinc-900">
                         <tr>

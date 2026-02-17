@@ -23,7 +23,7 @@
         />
     </div>
 
-    <div class="bg-white dark:bg-zinc-800 rounded-lg shadow overflow-hidden">
+    <div class="bg-white dark:bg-zinc-800 rounded-lg shadow overflow-x-auto">
         <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
             <thead class="bg-zinc-50 dark:bg-zinc-900">
                 <tr>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\EventController;
+use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,4 +20,6 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::get('events', [EventController::class, 'index']);
     Route::post('events', [EventController::class, 'store']);
+
+    Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus']);
 });

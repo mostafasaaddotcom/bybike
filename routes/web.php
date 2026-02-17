@@ -18,7 +18,7 @@ Route::post('/invoice/{token}/increment/{variantId}', [\App\Http\Controllers\Pub
 Route::post('/invoice/{token}/decrement/{variantId}', [\App\Http\Controllers\PublicInvoiceController::class, 'decrementQuantity'])
     ->name('invoice.decrement');
 
-Route::view('dashboard', 'dashboard')
+Route::get('dashboard', \App\Livewire\Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 

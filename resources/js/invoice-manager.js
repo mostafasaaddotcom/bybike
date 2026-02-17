@@ -1,7 +1,8 @@
-export default function invoiceManager(initialQuantities, initialInvoice, token, variantData) {
+export default function invoiceManager(initialQuantities, initialInvoice, token, variantData, eventData) {
     return {
         quantities: initialQuantities,
         invoiceData: {
+            id: initialInvoice.id,
             subtotal: parseFloat(initialInvoice.subtotal),
             tax_amount: parseFloat(initialInvoice.tax_amount),
             tax_rate: parseFloat(initialInvoice.tax_rate),
@@ -9,8 +10,11 @@ export default function invoiceManager(initialQuantities, initialInvoice, token,
             total: parseFloat(initialInvoice.total),
         },
         loading: false,
+        submitting: false,
+        submitted: false,
         token: token,
         variantData: variantData,
+        eventData: eventData,
         activeMenuId: null,
         cartOpen: false,
         unitPrices: {},
@@ -208,6 +212,61 @@ export default function invoiceManager(initialQuantities, initialInvoice, token,
                 alert('An error occurred. Please try again.');
             } finally {
                 this.loading = false;
+            }
+        },
+
+        /**
+         * Submit invoice to webhook
+         */
+        async submitInvoice() {
+            if (this.submitting || this.submitted) {
+                return;
+            }
+
+            this.submitting = true;
+
+            try {
+                const items = this.getCartItems().map(item => ({
+                    productName: item.productName,
+                    variantName: item.variantName,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    subtotal: item.subtotal,
+                }));
+
+                const payload = {
+                    event: this.eventData,
+                    invoice: {
+                        id: this.invoiceData.id,
+                        invoice_number: this.eventData.invoice_number,
+                        subtotal: this.invoiceData.subtotal,
+                        tax_rate: this.invoiceData.tax_rate,
+                        tax_amount: this.invoiceData.tax_amount,
+                        discount_amount: this.invoiceData.discount_amount,
+                        total: this.invoiceData.total,
+                    },
+                    items: items,
+                    total: this.invoiceData.total,
+                };
+
+                const response = await fetch('https://n8n.bybike.cloud/webhook/invoice-submission', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to submit invoice');
+                }
+
+                this.submitted = true;
+            } catch (error) {
+                console.error('Error submitting invoice:', error);
+                alert('Failed to submit invoice. Please try again.');
+            } finally {
+                this.submitting = false;
             }
         },
 
