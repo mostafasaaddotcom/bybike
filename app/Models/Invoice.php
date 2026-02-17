@@ -7,12 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
     /** @use HasFactory<\Database\Factories\InvoiceFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'event_id',
@@ -87,7 +86,7 @@ class Invoice extends Model
     public static function generateInvoiceNumber(): string
     {
         $year = now()->year;
-        $lastInvoice = static::withTrashed()->whereYear('created_at', $year)
+        $lastInvoice = static::whereYear('created_at', $year)
             ->orderBy('id', 'desc')
             ->first();
 

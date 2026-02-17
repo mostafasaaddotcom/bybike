@@ -54,14 +54,6 @@
                                 <flux:button size="sm" variant="ghost" href="/admin/customers/{{ $customer->id }}/edit" wire:navigate>
                                     Edit
                                 </flux:button>
-                                <flux:button
-                                    size="sm"
-                                    variant="danger"
-                                    wire:click="delete({{ $customer->id }})"
-                                    wire:confirm="Are you sure you want to delete this customer?"
-                                >
-                                    Delete
-                                </flux:button>
                             </div>
                         </td>
                     </tr>

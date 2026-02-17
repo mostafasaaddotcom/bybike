@@ -29,6 +29,7 @@ class Index extends Component
 
     public function delete(Invoice $invoice): void
     {
+        $invoice->items()->delete();
         $invoice->delete();
 
         session()->flash('success', 'Invoice deleted successfully.');
@@ -37,7 +38,7 @@ class Index extends Component
     public function render()
     {
         $invoices = Invoice::query()
-            ->with(['event' => fn ($q) => $q->withTrashed(), 'event.customer' => fn ($q) => $q->withTrashed()])
+            ->with(['event', 'event.customer' => fn ($q) => $q->withTrashed()])
             ->search($this->search)
             ->when($this->statusFilter, fn ($q) => $q->byStatus(InvoiceStatus::from($this->statusFilter)))
             ->latest()

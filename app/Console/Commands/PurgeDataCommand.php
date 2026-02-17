@@ -33,11 +33,11 @@ class PurgeDataCommand extends Command
         $invoiceItemCount = InvoiceItem::count();
         InvoiceItem::query()->delete();
 
-        $invoiceCount = Invoice::withTrashed()->count();
-        Invoice::withTrashed()->forceDelete();
+        $invoiceCount = Invoice::count();
+        Invoice::query()->delete();
 
-        $eventCount = Event::withTrashed()->count();
-        Event::withTrashed()->forceDelete();
+        $eventCount = Event::count();
+        Event::query()->delete();
 
         $customerCount = Customer::withTrashed()->count();
         Customer::withTrashed()->forceDelete();

@@ -16,23 +16,22 @@ test('purge-data command deletes all customers, events, invoices, and invoice it
         ->assertSuccessful();
 
     expect(Customer::withTrashed()->count())->toBe(0);
-    expect(Event::withTrashed()->count())->toBe(0);
-    expect(Invoice::withTrashed()->count())->toBe(0);
+    expect(Event::count())->toBe(0);
+    expect(Invoice::count())->toBe(0);
     expect(InvoiceItem::count())->toBe(0);
 });
 
-test('purge-data command also removes soft-deleted records', function () {
+test('purge-data command also removes soft-deleted customers', function () {
     $customer = Customer::factory()->create();
-    $event = Event::factory()->for($customer)->create();
+    Event::factory()->for($customer)->create();
     $customer->delete();
-    $event->delete();
 
     expect(Customer::withTrashed()->count())->toBe(1);
-    expect(Event::withTrashed()->count())->toBe(1);
+    expect(Event::count())->toBe(1);
 
     $this->artisan('app:purge-data')
         ->assertSuccessful();
 
     expect(Customer::withTrashed()->count())->toBe(0);
-    expect(Event::withTrashed()->count())->toBe(0);
+    expect(Event::count())->toBe(0);
 });

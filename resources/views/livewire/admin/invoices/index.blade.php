@@ -56,8 +56,8 @@
                             <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $invoice->event?->customer?->phone }}</div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="text-sm text-zinc-900 dark:text-zinc-300">{{ $invoice->event?->location ?? 'Deleted' }}</div>
-                            <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $invoice->event?->date?->format('M d, Y') ?? '-' }}</div>
+                            <div class="text-sm text-zinc-900 dark:text-zinc-300">{{ $invoice->event->location }}</div>
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ $invoice->event->date->format('M d, Y') }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-zinc-900 dark:text-zinc-300">{{ $invoice->issued_at->format('M d, Y') }}</div>
