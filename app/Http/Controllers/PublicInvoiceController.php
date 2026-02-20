@@ -108,7 +108,6 @@ class PublicInvoiceController extends Controller
         );
 
         $invoice->recalculate();
-        $invoice->save();
 
         return response()->json([
             'success' => true,
@@ -150,7 +149,6 @@ class PublicInvoiceController extends Controller
         if ($newQty === 0) {
             $invoice->items()->where('product_variant_id', $variantId)->delete();
             $invoice->recalculate();
-            $invoice->save();
 
             return response()->json([
                 'success' => true,
@@ -175,7 +173,6 @@ class PublicInvoiceController extends Controller
         ]);
 
         $invoice->recalculate();
-        $invoice->save();
 
         return response()->json([
             'success' => true,

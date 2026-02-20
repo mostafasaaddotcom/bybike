@@ -25,7 +25,7 @@
                         <div class="flex items-center gap-2">
                             <button
                                 @click="decrement(item.variantId)"
-                                :disabled="loading"
+                                :disabled="pendingRequests[item.variantId]"
                                 class="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,7 +35,7 @@
                             <span class="text-sm font-bold text-zinc-900 dark:text-white w-8 text-center" x-text="item.quantity"></span>
                             <button
                                 @click="increment(item.variantId)"
-                                :disabled="loading"
+                                :disabled="pendingRequests[item.variantId]"
                                 class="w-7 h-7 flex items-center justify-center rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

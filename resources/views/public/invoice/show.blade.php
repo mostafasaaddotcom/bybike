@@ -68,7 +68,7 @@
                     {{-- Product Grids (one per menu, toggled via x-show) --}}
                     @foreach($menus as $menu)
                         <div x-show="activeMenuId === {{ $menu->id }}" x-cloak>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 @foreach($menu->variants as $variant)
                                     @php
                                         $data = $variantData[$variant->id];
@@ -76,7 +76,7 @@
                                     @endphp
 
                                     <div
-                                        class="relative rounded-lg border-2 p-4 sm:p-5 transition-all duration-200"
+                                        class="relative rounded-lg border-2 p-3 transition-all duration-200"
                                         :class="getQuantity({{ $variant->id }}) > 0 ? 'bg-white dark:bg-zinc-800 border-blue-500 dark:border-blue-400 shadow-md' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'"
                                         x-data="{
                                             variantId: {{ $variant->id }},
@@ -85,66 +85,105 @@
                                             increaseRate: {{ $variant->increase_rate }}
                                         }"
                                     >
-                                        {{-- Product & Variant Name --}}
-                                        <div class="mb-3">
-                                            <h3 class="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">
-                                                {{ $variant->product->name }}
-                                            </h3>
-                                            <span class="inline-block mt-1 px-2 py-1 text-xs font-medium rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300">
-                                                {{ $variant->name }}
-                                            </span>
-                                        </div>
-
-                                        {{-- Pricing --}}
-                                        <div class="mb-4">
-                                            <div class="flex items-baseline gap-2">
-                                                <span class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white">
-                                                    <span x-text="getPrice({{ $variant->id }}, priceTiers, minQty).toFixed(2)"></span> LE
-                                                </span>
-                                                <span class="text-sm text-zinc-500 dark:text-zinc-400">per unit</span>
-                                            </div>
-                                            @if($variant->minimum_order_quantity > 1)
-                                                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                                                    Min: {{ $variant->minimum_order_quantity }} units
+                                        {{-- Variant Name & Price --}}
+                                        <div class="mb-2">
+                                            <div class="flex items-center gap-1">
+                                                <p class="text-sm font-medium text-zinc-900 dark:text-white leading-tight truncate">
+                                                    {{ $variant->name }}
+                                                    <span class="text-zinc-500 dark:text-zinc-400">(<span x-text="getPrice({{ $variant->id }}, priceTiers, minQty).toFixed(2)"></span> LE)</span>
                                                 </p>
-                                            @endif
+                                                {{-- Info icon with hover popover --}}
+                                                <div class="relative shrink-0" x-data="{ showInfo: false }" @click.outside="showInfo = false">
+                                                    <button
+                                                        @mouseenter="showInfo = true"
+                                                        @mouseleave="showInfo = false"
+                                                        @click.stop="showInfo = !showInfo"
+                                                        class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors focus:outline-none"
+                                                        type="button"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <path d="M12 16v-4"></path>
+                                                            <circle cx="12" cy="8" r="0.5" fill="currentColor"></circle>
+                                                        </svg>
+                                                    </button>
+                                                    <div
+                                                        x-show="showInfo"
+                                                        x-cloak
+                                                        x-transition:enter="transition ease-out duration-150"
+                                                        x-transition:enter-start="opacity-0 scale-95"
+                                                        x-transition:enter-end="opacity-100 scale-100"
+                                                        x-transition:leave="transition ease-in duration-100"
+                                                        x-transition:leave-start="opacity-100 scale-100"
+                                                        x-transition:leave-end="opacity-0 scale-95"
+                                                        class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden"
+                                                    >
+                                                        @if($variant->imageUrl())
+                                                            <img src="{{ $variant->imageUrl() }}" alt="{{ $variant->name }}" class="w-full h-28 object-cover">
+                                                        @endif
+                                                        <div class="p-3 space-y-1.5">
+                                                            <p class="text-xs font-semibold text-zinc-900 dark:text-white">{{ $variant->product->name }}</p>
+                                                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $variant->name }}</p>
+                                                            <div class="flex gap-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+                                                                @if($variant->minimum_order_quantity > 1)
+                                                                    <span>Min: {{ $variant->minimum_order_quantity }}</span>
+                                                                @endif
+                                                                @if($variant->increase_rate > 1)
+                                                                    <span>Step: +{{ $variant->increase_rate }}</span>
+                                                                @endif
+                                                            </div>
+                                                            @if(count($data['priceTiers']) > 0)
+                                                                <div class="border-t border-zinc-100 dark:border-zinc-700 pt-1.5 mt-1.5">
+                                                                    <p class="text-[11px] font-medium text-zinc-600 dark:text-zinc-300 mb-1">Price Tiers</p>
+                                                                    @foreach($data['priceTiers'] as $tier)
+                                                                        <div class="flex justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                                                                            <span>{{ $tier['from'] }}{{ $tier['to'] ? '–' . $tier['to'] : '+' }}</span>
+                                                                            <span class="font-medium">{{ number_format($tier['price'], 2) }} LE</span>
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {{-- Quantity Controls --}}
-                                        <div class="flex items-center justify-between gap-3">
+                                        <div class="flex items-center justify-between gap-2">
                                             <template x-if="getQuantity({{ $variant->id }}) > 0">
                                                 <button
                                                     @click="decrement({{ $variant->id }})"
-                                                    :disabled="loading"
-                                                    class="shrink-0 px-3 py-2 text-sm font-medium rounded-md border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    :disabled="pendingRequests[{{ $variant->id }}]"
+                                                    class="shrink-0 px-2 py-1.5 text-xs font-medium rounded border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                                 >
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
                                                     </svg>
                                                 </button>
                                             </template>
 
                                             <div class="flex-1 text-center">
-                                                <span class="text-2xl font-bold text-zinc-900 dark:text-white" x-text="getQuantity({{ $variant->id }})"></span>
+                                                <span class="text-lg font-bold text-zinc-900 dark:text-white" x-text="getQuantity({{ $variant->id }})"></span>
                                             </div>
 
                                             <button
                                                 @click="increment({{ $variant->id }})"
-                                                :disabled="loading"
+                                                :disabled="pendingRequests[{{ $variant->id }}]"
                                                 :class="getQuantity({{ $variant->id }}) > 0 ? 'shrink-0' : 'w-full'"
-                                                class="px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                class="px-2 py-1.5 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                             >
                                                 <template x-if="getQuantity({{ $variant->id }}) > 0">
-                                                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                                     </svg>
                                                 </template>
                                                 <template x-if="getQuantity({{ $variant->id }}) === 0">
                                                     <span class="flex items-center justify-center gap-1">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                                         </svg>
-                                                        Add to Invoice
+                                                        Add
                                                     </span>
                                                 </template>
                                             </button>
@@ -152,13 +191,13 @@
 
                                         {{-- Loading Indicator --}}
                                         <div
-                                            x-show="loading"
+                                            x-show="pendingRequests[{{ $variant->id }}]"
                                             x-transition:enter="transition ease-out duration-200"
                                             x-transition:enter-start="opacity-0"
                                             x-transition:enter-end="opacity-100"
                                             class="absolute inset-0 bg-white/50 dark:bg-zinc-800/50 rounded-lg flex items-center justify-center"
                                         >
-                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                                            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                                         </div>
                                     </div>
                                 @endforeach

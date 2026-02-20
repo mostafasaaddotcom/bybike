@@ -9,7 +9,7 @@ export default function invoiceManager(initialQuantities, initialInvoice, token,
             discount_amount: parseFloat(initialInvoice.discount_amount),
             total: parseFloat(initialInvoice.total),
         },
-        loading: false,
+        pendingRequests: {},
         submitting: false,
         submitted: false,
         token: token,
@@ -166,15 +166,83 @@ export default function invoiceManager(initialQuantities, initialInvoice, token,
         },
 
         /**
-         * Increment quantity for a variant
+         * Recalculate invoice totals locally from current quantities and unit prices
+         */
+        recalculateInvoice() {
+            let subtotal = 0;
+            for (const [variantId, qty] of Object.entries(this.quantities)) {
+                if (qty > 0 && this.unitPrices[variantId]) {
+                    subtotal += this.unitPrices[variantId] * qty;
+                }
+            }
+            this.invoiceData.subtotal = subtotal;
+            this.invoiceData.tax_amount = subtotal * this.invoiceData.tax_rate / 100;
+            this.invoiceData.total = subtotal + this.invoiceData.tax_amount - this.invoiceData.discount_amount;
+        },
+
+        /**
+         * Apply server response to local state
+         */
+        applyServerResponse(data, variantId) {
+            this.quantities[variantId] = data.quantity;
+
+            if (data.quantity > 0) {
+                this.unitPrices[variantId] = parseFloat(data.unit_price);
+            } else {
+                delete this.unitPrices[variantId];
+            }
+
+            this.invoiceData.subtotal = parseFloat(data.invoice.subtotal);
+            this.invoiceData.tax_amount = parseFloat(data.invoice.tax_amount);
+            this.invoiceData.tax_rate = parseFloat(data.invoice.tax_rate);
+            this.invoiceData.discount_amount = parseFloat(data.invoice.discount_amount);
+            this.invoiceData.total = parseFloat(data.invoice.total);
+        },
+
+        /**
+         * Rollback to a saved snapshot
+         */
+        rollback(variantId, prevQty, prevPrice, prevInvoice) {
+            this.quantities[variantId] = prevQty;
+
+            if (prevPrice !== undefined) {
+                this.unitPrices[variantId] = prevPrice;
+            } else {
+                delete this.unitPrices[variantId];
+            }
+
+            this.invoiceData.subtotal = prevInvoice.subtotal;
+            this.invoiceData.tax_amount = prevInvoice.tax_amount;
+            this.invoiceData.tax_rate = prevInvoice.tax_rate;
+            this.invoiceData.discount_amount = prevInvoice.discount_amount;
+            this.invoiceData.total = prevInvoice.total;
+        },
+
+        /**
+         * Increment quantity for a variant (optimistic)
          */
         async increment(variantId) {
-            if (this.loading) {
+            if (this.pendingRequests[variantId]) {
                 return;
             }
 
-            this.loading = true;
+            // Save previous state for rollback
+            const prevQty = this.getQuantity(variantId);
+            const prevPrice = this.unitPrices[variantId];
+            const prevInvoice = { ...this.invoiceData };
 
+            // Compute new state locally
+            const vData = this.variantData[variantId];
+            const newQty = prevQty === 0 ? Math.max(1, vData.minQty) : prevQty + vData.increaseRate;
+            const newPrice = this.calculatePriceForQuantity(newQty, vData.priceTiers);
+
+            // Optimistic update
+            this.quantities[variantId] = newQty;
+            this.unitPrices[variantId] = newPrice;
+            this.recalculateInvoice();
+
+            // Background request
+            this.pendingRequests[variantId] = true;
             try {
                 const response = await fetch(`/invoice/${this.token}/increment/${variantId}`, {
                     method: 'POST',
@@ -192,26 +260,84 @@ export default function invoiceManager(initialQuantities, initialInvoice, token,
                 const data = await response.json();
 
                 if (data.success) {
-                    // Update local quantities
-                    this.quantities[variantId] = data.quantity;
-
-                    // Store server-confirmed unit price
-                    this.unitPrices[variantId] = parseFloat(data.unit_price);
-
-                    // Update invoice totals
-                    this.invoiceData.subtotal = parseFloat(data.invoice.subtotal);
-                    this.invoiceData.tax_amount = parseFloat(data.invoice.tax_amount);
-                    this.invoiceData.tax_rate = parseFloat(data.invoice.tax_rate);
-                    this.invoiceData.discount_amount = parseFloat(data.invoice.discount_amount);
-                    this.invoiceData.total = parseFloat(data.invoice.total);
+                    this.applyServerResponse(data, variantId);
                 } else {
+                    this.rollback(variantId, prevQty, prevPrice, prevInvoice);
                     alert('Failed to update quantity. Please try again.');
                 }
             } catch (error) {
                 console.error('Error incrementing quantity:', error);
+                this.rollback(variantId, prevQty, prevPrice, prevInvoice);
                 alert('An error occurred. Please try again.');
             } finally {
-                this.loading = false;
+                delete this.pendingRequests[variantId];
+            }
+        },
+
+        /**
+         * Decrement quantity for a variant (optimistic)
+         */
+        async decrement(variantId) {
+            if (this.pendingRequests[variantId]) {
+                return;
+            }
+
+            const prevQty = this.getQuantity(variantId);
+            if (prevQty === 0) {
+                return;
+            }
+
+            // Save previous state for rollback
+            const prevPrice = this.unitPrices[variantId];
+            const prevInvoice = { ...this.invoiceData };
+
+            // Compute new state locally
+            const vData = this.variantData[variantId];
+            let newQty = Math.max(0, prevQty - vData.increaseRate);
+            if (newQty > 0 && newQty < vData.minQty) {
+                newQty = 0;
+            }
+
+            // Optimistic update
+            this.quantities[variantId] = newQty;
+            if (newQty > 0) {
+                const newPrice = this.calculatePriceForQuantity(newQty, vData.priceTiers);
+                this.unitPrices[variantId] = newPrice;
+            } else {
+                delete this.unitPrices[variantId];
+            }
+            this.recalculateInvoice();
+
+            // Background request
+            this.pendingRequests[variantId] = true;
+            try {
+                const response = await fetch(`/invoice/${this.token}/decrement/${variantId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': this.getCsrfToken(),
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.applyServerResponse(data, variantId);
+                } else {
+                    this.rollback(variantId, prevQty, prevPrice, prevInvoice);
+                    alert(data.message || 'Failed to update quantity. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error decrementing quantity:', error);
+                this.rollback(variantId, prevQty, prevPrice, prevInvoice);
+                alert('An error occurred. Please try again.');
+            } finally {
+                delete this.pendingRequests[variantId];
             }
         },
 
@@ -267,65 +393,6 @@ export default function invoiceManager(initialQuantities, initialInvoice, token,
                 alert('Failed to submit invoice. Please try again.');
             } finally {
                 this.submitting = false;
-            }
-        },
-
-        /**
-         * Decrement quantity for a variant
-         */
-        async decrement(variantId) {
-            if (this.loading) {
-                return;
-            }
-
-            // Check if item is on invoice
-            if (this.getQuantity(variantId) === 0) {
-                return;
-            }
-
-            this.loading = true;
-
-            try {
-                const response = await fetch(`/invoice/${this.token}/decrement/${variantId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': this.getCsrfToken(),
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const data = await response.json();
-
-                if (data.success) {
-                    // Update local quantities
-                    this.quantities[variantId] = data.quantity;
-
-                    // Update unit price or remove if quantity is 0
-                    if (data.quantity > 0) {
-                        this.unitPrices[variantId] = parseFloat(data.unit_price);
-                    } else {
-                        delete this.unitPrices[variantId];
-                    }
-
-                    // Update invoice totals
-                    this.invoiceData.subtotal = parseFloat(data.invoice.subtotal);
-                    this.invoiceData.tax_amount = parseFloat(data.invoice.tax_amount);
-                    this.invoiceData.tax_rate = parseFloat(data.invoice.tax_rate);
-                    this.invoiceData.discount_amount = parseFloat(data.invoice.discount_amount);
-                    this.invoiceData.total = parseFloat(data.invoice.total);
-                } else {
-                    alert(data.message || 'Failed to update quantity. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error decrementing quantity:', error);
-                alert('An error occurred. Please try again.');
-            } finally {
-                this.loading = false;
             }
         },
     };
