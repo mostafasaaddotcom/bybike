@@ -59,6 +59,7 @@ class PublicInvoiceController extends Controller
             'type' => $event->type->label(),
             'date' => $event->date->format('Y-m-d'),
             'location' => $event->location,
+            'is_indoor' => $event->is_indoor,
             'attendees' => $event->number_of_attendees,
             'customer_name' => $event->customer->name,
             'customer_phone' => $event->customer->phone,
