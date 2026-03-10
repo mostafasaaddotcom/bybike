@@ -17,8 +17,8 @@
             <h2 class="text-lg font-semibold dark:text-white">Invoice Information</h2>
 
             <flux:select wire:model.live="event_id" label="Event" required>
+                <option>Select an event</option>
                 @foreach($events as $event)
-                    <option>Select an event</option>
                     <option value="{{ $event->id }}">
                         {{ $event->customer->name }} - {{ $event->location }} ({{ $event->date->format('M d, Y') }})
                     </option>

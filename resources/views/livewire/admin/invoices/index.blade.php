@@ -4,9 +4,6 @@
             <h1 class="text-2xl font-bold dark:text-white">Invoices</h1>
             <p class="text-sm text-zinc-600 dark:text-zinc-400">Manage event invoices</p>
         </div>
-        <flux:button variant="primary" href="/admin/invoices/create" wire:navigate>
-            Create Invoice
-        </flux:button>
     </div>
 
     @if (session()->has('success'))

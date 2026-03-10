@@ -16,7 +16,8 @@
         <div class="bg-white dark:bg-zinc-800 rounded-lg shadow p-6 space-y-6">
             <h2 class="text-lg font-semibold dark:text-white">Event Information</h2>
 
-            <flux:select wire:model="customer_id" label="Customer" placeholder="Select a customer" required>
+            <flux:select wire:model="customer_id" label="Customer" required>
+                <option>Select a customer</option>
                 @foreach($customers as $customer)
                     <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->phone }})</option>
                 @endforeach
